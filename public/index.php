@@ -9,6 +9,7 @@ use Building\Domain\Repository\BuildingRepositoryInterface;
 use Building\Infrastructure\CommandHandler;
 use Building\Infrastructure\CommandHandler\RegisterNewBuildingHandler;
 use Building\Infrastructure\CommandHandler\CheckUserIntoBuildingHandler;
+use Building\Infrastructure\CommandHandler\CheckUserOutOfBuildingHandler;
 use Building\Infrastructure\Repository\BuildingRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDOSqlite\Driver;
@@ -175,6 +176,9 @@ call_user_func(function () {
             Command\CheckUserIntoBuilding::class => function(ContainerInterface $container) : CheckUserIntoBuildingHandler {
                 return new CheckUserIntoBuildingHandler($container->get(BuildingRepositoryInterface::class));
             },
+            Command\CheckUserOutOfBuilding::class => function(ContainerInterface $container) : CheckUserOutOfBuildingHandler {
+                return new CheckUserOutOfBuildingHandler($container->get(BuildingRepositoryInterface::class));
+            },
             BuildingRepositoryInterface::class => function (ContainerInterface $container) : BuildingRepositoryInterface {
                 return new BuildingRepository(
                     new AggregateRepository(
@@ -225,6 +229,13 @@ call_user_func(function () {
     });
 
     $app->post('/checkout/{buildingId}', function (Request $request, Response $response) use ($sm) {
+        $commandBus = $sm->get(CommandBus::class);
+        $commandBus->dispatch(Command\CheckUserOutOfBuilding::fromUsernameAndBuildingId(
+            $request->getParsedBody()['username'],
+            $request->getAttribute('buildingId')
+        ));
+
+        return $response->withAddedHeader('Location', '/');
 
     });
 
