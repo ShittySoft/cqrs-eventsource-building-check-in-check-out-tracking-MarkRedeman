@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+
+  php:
+    build:
+      context: .
+    command: php -S 0.0.0.0:8080 -t public/
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/var/www/my_app
+
+  sqlite:
+    image: tcgerlach/sqlite
+    working_dir: /data
+    volumes:
+      - ./data:/data
