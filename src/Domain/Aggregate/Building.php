@@ -19,6 +19,11 @@ final class Building extends AggregateRoot
      */
     private $name;
 
+    /**
+     * @var string[]
+     */
+    private $checkedInUsers;
+
     public static function new($name) : self
     {
         $self = new self();
@@ -35,7 +40,13 @@ final class Building extends AggregateRoot
 
     public function checkInUser(string $username)
     {
-        // @TODO verify that the user is not already checked in
+        // Don't let a user check in more than once
+        if (in_array($username, $this->checkedInUsers, true)) {
+            throw new \InvalidArgumentException(sprintf(
+                'User "%s" is already checked in',
+                $username
+            ));
+        }
 
         $this->recordThat(UserCheckedIntoBuilding::occur(
             $this->id(),
@@ -58,7 +69,11 @@ final class Building extends AggregateRoot
 
     public function whenUserCheckedIntoBuilding(UserCheckedIntoBuilding $event)
     {
-        // @TODO
+        $username = $event->username();
+
+        $this->checkedInUsers[] = $username;
+
+        $this->checkedInUsers = array_unique($this->checkedInUsers);
     }
 
     /**
